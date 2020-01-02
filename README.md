@@ -10,6 +10,7 @@ __m256i_u random_vector = generator_simd.next();
 ...
 ```
 Comparison of performance of several different random number generators:
+
 | Random generator                   | Required instruction sets | Throughput | Time per operation |
 |------------------------------------|---------------------------|------------|--------------------|
 | rand()                             |                           | 4.3 Gb/s   | 7.35 ns            |
