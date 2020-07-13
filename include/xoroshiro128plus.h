@@ -1,29 +1,29 @@
-#ifndef XOROSHIRO128PLUSPLUS_H_INCLUDED
-#define XOROSHIRO128PLUSPLUS_H_INCLUDED
+#ifndef XOROSHIRO128PLUS_H_INCLUDED
+#define XOROSHIRO128PLUS_H_INCLUDED
 
 #include <cstdint>
 
 #include "splitmix.h"
 
-namespace xoroshiro128plusplus {
+namespace xoroshiro128plus {
 
 #ifdef __AVX__
 
-//xoroshiro128++ implementation using AVX instruction set to generate random __m128i_u.
-struct xoroshiro128plusplus_2 {
-    xoroshiro128plusplus_2(__m128i_u a, __m128i_u b) noexcept
+//xoroshiro128+ implementation using AVX instruction set to generate random __m128i_u.
+struct xoroshiro128plus_2 {
+    xoroshiro128plus_2(__m128i_u a, __m128i_u b) noexcept
     {
         m_state[0] = a;
         m_state[1] = b;
     }
 
-    xoroshiro128plusplus_2(uint64_t a, uint64_t b, uint64_t c, uint64_t d) noexcept
+    xoroshiro128plus_2(uint64_t a, uint64_t b, uint64_t c, uint64_t d) noexcept
     {
         m_state[0] = _mm_set_epi64x(a, b);
         m_state[1] = _mm_set_epi64x(c, d);
     }
 
-    explicit xoroshiro128plusplus_2(splitmix::splitmix64 gen) noexcept
+    explicit xoroshiro128plus_2(splitmix::splitmix64 gen) noexcept
     {
         m_state[0] = _mm_set_epi64x(gen.next(), gen.next());
         m_state[1] = _mm_set_epi64x(gen.next(), gen.next());
@@ -34,18 +34,17 @@ struct xoroshiro128plusplus_2 {
     {
         const __m128i_u s0 = m_state[0];
         __m128i_u s1 = m_state[1];
-        const __m128i_u result = _mm_add_epi64(rotl(_mm_add_epi64(s0, s1), 17), s0);
+        const __m128i_u result = _mm_add_epi64(s0, s1);
 
-        s1 = _mm_xor_si128(s0, s1);
-
-        m_state[0] = _mm_xor_si128(rotl(s0, 49), _mm_xor_si128(s1, _mm_slli_epi64(s1, 21)));
-        m_state[1] = rotl(s1, 28);
+        s1 = _mm_xor_si128(s1, s0);
+        m_state[0] = _mm_xor_si128(rotl(s0, 24), _mm_xor_si128(s1, _mm_slli_epi64(s1, 16)));
+        m_state[1] = rotl(s1, 37);
 
         return result;
     }
 
     //Compares internal states of two engines for equality.
-    bool operator==(const xoroshiro128plusplus_2& other) const noexcept
+    bool operator==(const xoroshiro128plus_2& other) const noexcept
     {
         __m128i_u cmp0 = _mm_cmpeq_epi32(other.m_state[0], m_state[0]);
         __m128i_u cmp1 = _mm_cmpeq_epi32(other.m_state[1], m_state[1]);
@@ -55,7 +54,7 @@ struct xoroshiro128plusplus_2 {
     }
 
     //Compares internal states of two engines for inequality.
-    bool operator!=(const xoroshiro128plusplus_2& other) const noexcept
+    bool operator!=(const xoroshiro128plus_2& other) const noexcept
     {
         return !(*this == other);
     }
@@ -73,14 +72,14 @@ private:
 
 #ifdef __AVX2__
 
-struct xoroshiro128plusplus_4 {
-    xoroshiro128plusplus_4(__m256i_u a, __m256i_u b) noexcept
+struct xoroshiro128plus_4 {
+    xoroshiro128plus_4(__m256i_u a, __m256i_u b) noexcept
     {
         m_state[0] = a;
         m_state[1] = b;
     }
 
-    explicit xoroshiro128plusplus_4(splitmix::splitmix64 gen) noexcept
+    explicit xoroshiro128plus_4(splitmix::splitmix64 gen) noexcept
     {
         m_state[0] = _mm256_set_epi64x(gen.next(), gen.next(), gen.next(), gen.next());
         m_state[1] = _mm256_set_epi64x(gen.next(), gen.next(), gen.next(), gen.next());
@@ -91,18 +90,17 @@ struct xoroshiro128plusplus_4 {
     {
         const __m256i_u s0 = m_state[0];
         __m256i_u s1 = m_state[1];
-        const __m256i_u result = _mm256_add_epi64(rotl(_mm256_add_epi64(s0, s1), 17), s0);
+        const __m256i_u result = _mm256_add_epi64(s0, s1);
 
-        s1 = _mm256_xor_si256(s0, s1);
-
-        m_state[0] = _mm256_xor_si256(rotl(s0, 49), _mm256_xor_si256(s1, _mm256_slli_epi64(s1, 21)));
-        m_state[1] = rotl(s1, 28);
+        s1 = _mm256_xor_si256(s1, s0);
+        m_state[0] = _mm256_xor_si256(rotl(s0, 24), _mm256_xor_si256(s1, _mm256_slli_epi64(s1, 16)));
+        m_state[1] = rotl(s1, 37);
 
         return result;
     }
 
     //Compares internal states of two engines for equality.
-    bool operator==(const xoroshiro128plusplus_4& other) const noexcept
+    bool operator==(const xoroshiro128plus_4& other) const noexcept
     {
         __m256i_u cmp0 = _mm256_cmpeq_epi32(other.m_state[0], m_state[0]);
         __m256i_u cmp1 = _mm256_cmpeq_epi32(other.m_state[1], m_state[1]);
@@ -112,7 +110,7 @@ struct xoroshiro128plusplus_4 {
     }
 
     //Compares internal states of two engines for inequality.
-    bool operator!=(const xoroshiro128plusplus_4& other) const noexcept
+    bool operator!=(const xoroshiro128plus_4& other) const noexcept
     {
         return !(*this == other);
     }
@@ -130,15 +128,15 @@ private:
 
 #ifdef __AVX512F__
 
-//xoroshiro128++ implementation using AVX512F instruction set to generate random __m512i_u.
-struct xoroshiro128plusplus_8 {
-    xoroshiro128plusplus_8(__m512i_u a, __m512i_u b) noexcept
+//xoroshiro128+ implementation using AVX512F instruction set to generate random __m512i_u.
+struct xoroshiro128plus_8 {
+    xoroshiro128plus_8(__m512i_u a, __m512i_u b) noexcept
     {
         m_state[0] = a;
         m_state[1] = b;
     }
 
-    explicit xoroshiro128plusplus_8(splitmix::splitmix64 gen) noexcept
+    explicit xoroshiro128plus_8(splitmix::splitmix64 gen) noexcept
     {
         m_state[0] = _mm512_set_epi64(gen.next(), gen.next(), gen.next(), gen.next(), gen.next(), gen.next(), gen.next(), gen.next());
         m_state[1] = _mm512_set_epi64(gen.next(), gen.next(), gen.next(), gen.next(), gen.next(), gen.next(), gen.next(), gen.next());
@@ -149,18 +147,17 @@ struct xoroshiro128plusplus_8 {
     {
         const __m512i_u s0 = m_state[0];
         __m512i_u s1 = m_state[1];
-        const __m512i_u result = _mm512_add_epi64(rotl(_mm512_add_epi64(s0, s1), 17), s0);
+        const __m512i_u result = _mm512_add_epi64(s0, s1);
 
-        s1 = _mm512_xor_si512(s0, s1);
-
-        m_state[0] = _mm512_xor_si512(rotl(s0, 49), _mm512_xor_si512(s1, _mm512_slli_epi64(s1, 21)));
-        m_state[1] = rotl(s1, 28);
+        s1 = _mm512_xor_si512(s1, s0);
+        m_state[0] = _mm512_xor_si512(rotl(s0, 24), _mm512_xor_si512(s1, _mm512_slli_epi64(s1, 16)));
+        m_state[1] = rotl(s1, 37);
 
         return result;
     }
 
     //Compares internal states of two engines for equality.
-    bool operator==(const xoroshiro128plusplus_8& other) const noexcept
+    bool operator==(const xoroshiro128plus_8& other) const noexcept
     {
         __mmask8 cmp0 = _mm512_cmpeq_epi64_mask(other.m_state[0], m_state[0]);
         __mmask8 cmp1 = _mm512_cmpeq_epi64_mask(other.m_state[1], m_state[1]);
@@ -171,7 +168,7 @@ struct xoroshiro128plusplus_8 {
     }
 
     //Compares internal states of two engines for inequality.
-    bool operator!=(const xoroshiro128plusplus_8& other) const noexcept
+    bool operator!=(const xoroshiro128plus_8& other) const noexcept
     {
         return !(*this == other);
     }
@@ -193,14 +190,14 @@ private:
 
 #endif
 
-struct xoroshiro128plusplus {
-    xoroshiro128plusplus(uint64_t a, uint64_t b) noexcept
+struct xoroshiro128plus {
+    xoroshiro128plus(uint64_t a, uint64_t b) noexcept
     {
         m_state[0] = a;
         m_state[1] = b;
     }
 
-    explicit xoroshiro128plusplus(splitmix::splitmix64 gen) noexcept
+    explicit xoroshiro128plus(splitmix::splitmix64 gen) noexcept
     {
         m_state[0] = gen.next();
         m_state[1] = gen.next();
@@ -211,20 +208,20 @@ struct xoroshiro128plusplus {
     {
         const uint64_t s0 = m_state[0];
         uint64_t s1 = m_state[1];
-        const uint64_t result = rotl(s0 + s1, 17) + s0;
+        const uint64_t result = s0 + s1;
 
         s1 ^= s0;
-        m_state[0] = rotl(s0, 49) ^ s1 ^ (s1 << 21); // a, b
-        m_state[1] = rotl(s1, 28); // c
+        m_state[0] = rotl(s0, 24) ^ s1 ^ (s1 << 16); // a, b
+        m_state[1] = rotl(s1, 37); // c
 
         return result;
     }
 
     //Compares internal states of two engines for equality.
-    constexpr bool operator==(const xoroshiro128plusplus& other) const noexcept { return m_state[0] == other.m_state[0] && m_state[1] == other.m_state[1]; }
+    constexpr bool operator==(const xoroshiro128plus& other) const noexcept { return m_state[0] == other.m_state[0] && m_state[1] == other.m_state[1]; }
 
     //Compares internal states of two engines for inequality.
-    constexpr bool operator!=(const xoroshiro128plusplus& other) const noexcept { return m_state[0] != other.m_state[0] || m_state[1] != other.m_state[1]; }
+    constexpr bool operator!=(const xoroshiro128plus& other) const noexcept { return m_state[0] != other.m_state[0] || m_state[1] != other.m_state[1]; }
 
 private:
     uint64_t m_state[2];
@@ -236,4 +233,4 @@ private:
 };
 }
 
-#endif
+#endif // XOROSHIRO128PLUS_H_INCLUDED
