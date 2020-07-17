@@ -1,17 +1,17 @@
-#ifndef XOSHIRO256SS_H_INCLUDED
-#define XOSHIRO256SS_H_INCLUDED
+#ifndef XOSHIRO256PLUSPLUS_H_INCLUDED
+#define XOSHIRO256PLUSPLUS_H_INCLUDED
 
 #include <cstdint>
 
 #include "splitmix.h"
 
-namespace xoshiro256ss {
+namespace xoshiro256plusplus {
 
 #ifdef __AVX__
 
-//xoshiro256** implementation using AVX instruction set to generate random __m128i_u.
-struct xoshiro256ss_2 {
-    xoshiro256ss_2(__m128i_u a, __m128i_u b, __m128i_u c, __m128i_u d) noexcept
+//xoshiro256++ implementation using AVX instruction set to generate random __m128i_u.
+struct xoshiro256plusplus_2 {
+    xoshiro256plusplus_2(__m128i_u a, __m128i_u b, __m128i_u c, __m128i_u d) noexcept
     {
         m_state[0] = a;
         m_state[1] = b;
@@ -19,7 +19,7 @@ struct xoshiro256ss_2 {
         m_state[3] = d;
     }
 
-    xoshiro256ss_2(uint64_t a, uint64_t b, uint64_t c, uint64_t d, uint64_t e, uint64_t f, uint64_t g, uint64_t h) noexcept
+    xoshiro256plusplus_2(uint64_t a, uint64_t b, uint64_t c, uint64_t d, uint64_t e, uint64_t f, uint64_t g, uint64_t h) noexcept
     {
         m_state[0] = _mm_set_epi64x(a, b);
         m_state[1] = _mm_set_epi64x(c, d);
@@ -27,7 +27,7 @@ struct xoshiro256ss_2 {
         m_state[3] = _mm_set_epi64x(g, h);
     }
 
-    explicit xoshiro256ss_2(splitmix::splitmix64 gen) noexcept
+    explicit xoshiro256plusplus_2(splitmix::splitmix64 gen) noexcept
     {
         for (size_t i = 0; i < 4; ++i)
             m_state[i] = _mm_set_epi64x(gen.next(), gen.next());
@@ -36,11 +36,7 @@ struct xoshiro256ss_2 {
     //Generates random __m128i_u.
     __m128i_u next() noexcept
     {
-        //m_state[1] * 5 is calculated as m_state[1] + (m_state[1] << 2)
-        const __m128i_u rotl_result = rotl(_mm_add_epi64(m_state[1], _mm_slli_epi64(m_state[1], 2)), 7);
-
-        //rotl_result * 9 is calculated as rotl_result + (rotl_result << 3)
-        const __m128i_u result = _mm_add_epi64(rotl_result, _mm_slli_epi64(rotl_result, 3));
+        const __m128i_u result = _mm_add_epi64(rotl(_mm_add_epi64(m_state[0], m_state[3]), 23), m_state[0]);
 
         const __m128i_u t = _mm_slli_epi64(m_state[1], 17);
 
@@ -57,7 +53,7 @@ struct xoshiro256ss_2 {
     }
 
     //Compares internal states of two engines for equality.
-    bool operator==(const xoshiro256ss_2& other) const noexcept
+    bool operator==(const xoshiro256plusplus_2& other) const noexcept
     {
         //TODO: Check whether its faster than creating all 4 masks simultaniously and then comparing all of them with 0xffffU in return statement.
         for (size_t i = 0; i < 4; ++i) {
@@ -71,7 +67,7 @@ struct xoshiro256ss_2 {
     }
 
     //Compares internal states of two engines for inequality.
-    bool operator!=(const xoshiro256ss_2& other) const noexcept
+    bool operator!=(const xoshiro256plusplus_2& other) const noexcept
     {
         return !(*this == other);
     }
@@ -89,8 +85,8 @@ private:
 
 #ifdef __AVX2__
 
-struct xoshiro256ss_4 {
-    xoshiro256ss_4(__m256i_u a, __m256i_u b, __m256i_u c, __m256i_u d) noexcept
+struct xoshiro256plusplus_4 {
+    xoshiro256plusplus_4(__m256i_u a, __m256i_u b, __m256i_u c, __m256i_u d) noexcept
     {
         m_state[0] = a;
         m_state[1] = b;
@@ -98,7 +94,7 @@ struct xoshiro256ss_4 {
         m_state[1] = d;
     }
 
-    explicit xoshiro256ss_4(splitmix::splitmix64 gen) noexcept
+    explicit xoshiro256plusplus_4(splitmix::splitmix64 gen) noexcept
     {
         for (int i = 0; i < 4; ++i)
             m_state[i] = _mm256_set_epi64x(gen.next(), gen.next(), gen.next(), gen.next());
@@ -107,11 +103,7 @@ struct xoshiro256ss_4 {
     //Generates random __m256i_u.
     __m256i_u next() noexcept
     {
-        //m_state[1] * 5 is calculated as m_state[1] + (m_state[1] << 2)
-        const __m256i_u rotl_result = rotl(_mm256_add_epi64(m_state[1], _mm256_slli_epi64(m_state[1], 2)), 7);
-
-        //rotl_result * 9 is calculated as rotl_result + (rotl_result << 3)
-        const __m256i_u result = _mm256_add_epi64(rotl_result, _mm256_slli_epi64(rotl_result, 3));
+        const __m256i_u result = _mm256_add_epi64(rotl(_mm256_add_epi64(m_state[0], m_state[3]), 23), m_state[0]);
 
         const __m256i_u t = _mm256_slli_epi64(m_state[1], 17);
 
@@ -128,7 +120,7 @@ struct xoshiro256ss_4 {
     }
 
     //Compares internal states of two engines for equality.
-    bool operator==(const xoshiro256ss_4& other) const noexcept
+    bool operator==(const xoshiro256plusplus_4& other) const noexcept
     {
         for (size_t i = 0; i < 4; ++i) {
             __m256i_u cmp = _mm256_cmpeq_epi32(other.m_state[i], m_state[i]);
@@ -141,7 +133,7 @@ struct xoshiro256ss_4 {
     }
 
     //Compares internal states of two engines for inequality.
-    bool operator!=(const xoshiro256ss_4& other) const noexcept
+    bool operator!=(const xoshiro256plusplus_4& other) const noexcept
     {
         return !(*this == other);
     }
@@ -159,9 +151,9 @@ private:
 
 #ifdef __AVX512F__
 
-//xoshiro256** implementation using AVX512F instruction set to generate random __m512i_u.
-struct xoshiro256ss_8 {
-    xoshiro256ss_8(__m512i_u a, __m512i_u b, __m512i_u c, __m512i_u d) noexcept
+//xoroshiro256++ implementation using AVX512F instruction set to generate random __m512i_u.
+struct xoshiro256plusplus_8 {
+    xoshiro256plusplus_8(__m512i_u a, __m512i_u b, __m512i_u c, __m512i_u d) noexcept
     {
         m_state[0] = a;
         m_state[1] = b;
@@ -169,7 +161,7 @@ struct xoshiro256ss_8 {
         m_state[3] = d;
     }
 
-    explicit xoshiro256ss_8(splitmix::splitmix64 gen) noexcept
+    explicit xoshiro256plusplus_8(splitmix::splitmix64 gen) noexcept
     {
         for (size_t i = 0; i < 4; ++i)
             m_state[i] = _mm512_set_epi64(gen.next(), gen.next(), gen.next(), gen.next(), gen.next(), gen.next(), gen.next(), gen.next());
@@ -178,11 +170,7 @@ struct xoshiro256ss_8 {
     //Generates random __m512i_u.
     __m512i_u next() noexcept
     {
-        //_mm512_mullo_epi64() is slower than using shift + add; it also requires AVX512DQ instruction set.
-        //m_state[1] * 5 is calculated as m_state[1] + (m_state[1] << 2)
-        const __m512i_u rotl_result = rotl(_mm512_add_epi64(m_state[1], _mm512_slli_epi64(m_state[1], 2)), 7);
-        //rotl_result * 9 is calculated as rotl_result + (rotl_result << 3)
-        const __m512i_u result = _mm512_add_epi64(rotl_result, _mm512_slli_epi64(rotl_result, 3));
+        const __m512i_u result = _mm512_add_epi64(rotl(_mm512_add_epi64(m_state[0], m_state[3]), 23), m_state[0]);
 
         const __m512i_u t = _mm512_slli_epi64(m_state[1], 17);
 
@@ -199,7 +187,7 @@ struct xoshiro256ss_8 {
     }
 
     //Compares internal states of two engines for equality.
-    bool operator==(const xoshiro256ss_8& other) const noexcept
+    bool operator==(const xoshiro256plusplus_8& other) const noexcept
     {
         for (size_t i = 0; i < 4; ++i) {
             __mmask8 cmp = _mm512_cmpeq_epi64_mask(other.m_state[i], m_state[i]);
@@ -212,7 +200,7 @@ struct xoshiro256ss_8 {
     }
 
     //Compares internal states of two engines for inequality.
-    bool operator!=(const xoshiro256ss_8& other) const noexcept
+    bool operator!=(const xoshiro256plusplus_8& other) const noexcept
     {
         return !(*this == other);
     }
@@ -234,8 +222,8 @@ private:
 
 #endif
 
-struct xoshiro256ss {
-    xoshiro256ss(uint64_t a, uint64_t b, uint64_t c, uint64_t d) noexcept
+struct xoshiro256plusplus {
+    xoshiro256plusplus(uint64_t a, uint64_t b, uint64_t c, uint64_t d) noexcept
     {
         m_state[0] = a;
         m_state[1] = b;
@@ -243,7 +231,7 @@ struct xoshiro256ss {
         m_state[3] = d;
     }
 
-    explicit xoshiro256ss(splitmix::splitmix64 gen) noexcept
+    explicit xoshiro256plusplus(splitmix::splitmix64 gen) noexcept
     {
         for (size_t i = 0; i < 4; ++i)
             m_state[i] = gen.next();
@@ -252,7 +240,7 @@ struct xoshiro256ss {
     //Generates random uint64_t.
     constexpr uint64_t next() noexcept
     {
-        const uint64_t result = rotl(m_state[1] * 5, 7) * 9;
+        const uint64_t result = rotl(m_state[0] + m_state[1], 23) + m_state[0];
 
         const uint64_t t = m_state[1] << 17;
 
@@ -269,10 +257,10 @@ struct xoshiro256ss {
     }
 
     //Compares internal states of two engines for equality.
-    constexpr bool operator==(const xoshiro256ss& other) const noexcept { return m_state[0] == other.m_state[0] && m_state[1] == other.m_state[1] && m_state[2] == other.m_state[2] && m_state[3] == other.m_state[3]; }
+    constexpr bool operator==(const xoshiro256plusplus& other) const noexcept { return m_state[0] == other.m_state[0] && m_state[1] == other.m_state[1] && m_state[2] == other.m_state[2] && m_state[3] == other.m_state[3]; }
 
     //Compares internal states of two engines for inequality.
-    constexpr bool operator!=(const xoshiro256ss& other) const noexcept { return m_state[0] != other.m_state[0] || m_state[1] != other.m_state[1] || m_state[2] != other.m_state[2] || m_state[3] != other.m_state[3]; }
+    constexpr bool operator!=(const xoshiro256plusplus& other) const noexcept { return m_state[0] != other.m_state[0] || m_state[1] != other.m_state[1] || m_state[2] != other.m_state[2] || m_state[3] != other.m_state[3]; }
 
 private:
     uint64_t m_state[4];
@@ -284,4 +272,4 @@ private:
 };
 }
 
-#endif // XOSHIRO256SS_H_INCLUDED
+#endif // XOSHIRO256PLUSPLUS_H_INCLUDED
